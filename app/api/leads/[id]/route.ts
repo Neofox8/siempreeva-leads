@@ -65,3 +65,32 @@ export async function PATCH(
   }
   return NextResponse.json({ ok: true, ignored });
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id;
+  if (!id) {
+    return NextResponse.json({ ok: false, error: "Falta id" }, { status: 400 });
+  }
+
+  const sesion = await getSesion();
+  if (!sesion) {
+    return NextResponse.json({ ok: false, error: "No autenticado" }, { status: 401 });
+  }
+  if (sesion.rol !== "admin") {
+    return NextResponse.json(
+      { ok: false, error: "Solo admins pueden eliminar leads" },
+      { status: 403 }
+    );
+  }
+
+  const supabase = supabaseAdmin();
+  const { error } = await supabase.from("leads").delete().eq("id", id);
+
+  if (error) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  }
+  return NextResponse.json({ ok: true });
+}

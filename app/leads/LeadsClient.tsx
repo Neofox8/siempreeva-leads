@@ -207,27 +207,25 @@ export default function LeadsClient({
       )}
 
       <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
-        <table className="w-full min-w-[1380px] table-fixed divide-y divide-neutral-200 text-sm">
+        <table className="w-full table-fixed divide-y divide-neutral-200 text-sm">
           <thead className="bg-crema text-left text-xs uppercase tracking-wide text-neutral-600">
             <tr>
-              <Th width="w-[140px]" sticky>Fecha</Th>
+              <Th width="w-[100px]">Fecha</Th>
               <Th width="w-[140px]">Nombre</Th>
-              <Th width="w-[120px]">Usuario</Th>
-              <Th width="w-[120px]">Celular</Th>
+              <Th width="w-[110px]">Celular</Th>
               <Th width="w-[110px]">Sede</Th>
               <Th width="w-[90px]">Turno</Th>
-              <Th width="w-[80px]">Día</Th>
-              <Th width="w-[150px]">Fuente</Th>
-              <Th width="w-[80px]">Seguidora</Th>
-              <Th width="w-[150px]">Atendido</Th>
-              <Th width="min-w-[200px]">Observación</Th>
+              <Th width="w-[140px]">Fuente</Th>
+              <Th width="w-[140px]">Atendido</Th>
+              <Th width="min-w-[180px]">Observación</Th>
+              {isAdmin && <Th width="w-[110px]">{""}</Th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
             {leads.length === 0 ? (
               <tr>
                 <td
-                  colSpan={11}
+                  colSpan={isAdmin ? 9 : 8}
                   className="px-4 py-10 text-center text-neutral-500"
                 >
                   No hay leads para los filtros aplicados.
@@ -256,9 +254,12 @@ export default function LeadsClient({
 }
 
 function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
+  const router = useRouter();
   const [atendido, setAtendido] = useState<EstadoLead>(lead.atendido);
   const [observacion, setObservacion] = useState(lead.observacion ?? "");
   const [saving, setSaving] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function patch(field: string, value: unknown) {
     setSaving(field);
@@ -277,30 +278,37 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
     }
   }
 
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/leads/${lead.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        alert(`Error eliminando: ${j.error ?? res.status}`);
+        return;
+      }
+      router.refresh();
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
+
   const atendidoColor =
     ESTADO_COLORS[atendido] ?? ESTADO_COLORS.no_atendido;
 
-  const fechaStr = formatDate(lead.fecha);
+  const fechaShort = formatDate(lead.fecha);
+  const fechaFull = formatDateFull(lead.fecha);
 
   return (
     <tr className="hover:bg-crema/40">
-      <Td sticky title={fechaStr}>
-        {fechaStr}
-      </Td>
+      <Td title={fechaFull}>{fechaShort}</Td>
       <Td title={lead.nombre ?? undefined}>
         <AdminText
           isAdmin={isAdmin}
           initial={lead.nombre}
           onSave={(v) => patch("nombre", v)}
           saving={saving === "nombre"}
-        />
-      </Td>
-      <Td title={lead.usuario ?? undefined}>
-        <AdminText
-          isAdmin={isAdmin}
-          initial={lead.usuario}
-          onSave={(v) => patch("usuario", v)}
-          saving={saving === "usuario"}
         />
       </Td>
       <Td title={lead.celular ?? undefined}>
@@ -329,14 +337,6 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           saving={saving === "turno"}
         />
       </Td>
-      <Td title={lead.dia ?? undefined}>
-        <AdminText
-          isAdmin={isAdmin}
-          initial={lead.dia}
-          onSave={(v) => patch("dia", v)}
-          saving={saving === "dia"}
-        />
-      </Td>
       <Td title={lead.fuente ? ORIGEN_LABELS[lead.fuente] : undefined}>
         <AdminSelect
           isAdmin={isAdmin}
@@ -346,7 +346,6 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           saving={saving === "fuente"}
         />
       </Td>
-      <Td>{lead.seguidora == null ? "—" : lead.seguidora ? "Sí" : "No"}</Td>
       <Td title={ESTADO_LABELS[atendido]}>
         <div className="flex items-center gap-1">
           <select
@@ -387,6 +386,39 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           )}
         </div>
       </Td>
+      {isAdmin && (
+        <Td>
+          {confirmDelete ? (
+            <div className="flex items-center gap-1 text-[11px]">
+              <span className="text-neutral-600">¿Confirmar?</span>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="rounded bg-red-600 px-2 py-0.5 font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleting ? "…" : "Sí"}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+                className="text-neutral-500 hover:text-neutral-800"
+                aria-label="Cancelar"
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="text-base leading-none text-neutral-400 hover:text-red-600"
+              aria-label="Eliminar lead"
+              title="Eliminar"
+            >
+              ×
+            </button>
+          )}
+        </Td>
+      )}
     </tr>
   );
 }
@@ -505,39 +537,22 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Th({
   children,
   width,
-  sticky = false,
 }: {
   children: React.ReactNode;
   width: string;
-  sticky?: boolean;
 }) {
-  return (
-    <th
-      className={`px-4 py-3 font-semibold ${width} ${
-        sticky ? "sticky left-0 z-20 bg-crema" : ""
-      }`}
-    >
-      {children}
-    </th>
-  );
+  return <th className={`px-4 py-3 font-semibold ${width}`}>{children}</th>;
 }
 
 function Td({
   children,
-  sticky = false,
   title,
 }: {
   children: React.ReactNode;
-  sticky?: boolean;
   title?: string;
 }) {
   return (
-    <td
-      title={title}
-      className={`truncate px-4 py-2 align-middle ${
-        sticky ? "sticky left-0 z-10 bg-white" : ""
-      }`}
-    >
+    <td title={title} className="truncate px-4 py-2 align-middle">
       {children}
     </td>
   );
@@ -545,8 +560,19 @@ function Td({
 
 function formatDate(iso: string) {
   try {
-    const d = new Date(iso);
-    return d.toLocaleString("es-PE", {
+    return new Date(iso).toLocaleDateString("es-PE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function formatDateFull(iso: string) {
+  try {
+    return new Date(iso).toLocaleString("es-PE", {
       day: "2-digit",
       month: "2-digit",
       year: "2-digit",
