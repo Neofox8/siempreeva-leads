@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useEffect } from "react";
 import type { EstadoLead, Lead, SesionUsuario } from "@/types/lead";
 import {
   ESTADO_COLORS,
@@ -10,8 +10,11 @@ import {
   ORIGEN_LABELS,
   ORIGEN_OPTIONS,
 } from "@/lib/enums";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import { signOutAction } from "@/app/login/actions";
 import NewLeadModal from "./NewLeadModal";
+
+const POLL_INTERVAL_MS = 30_000;
 
 type Stats = {
   total: number;
@@ -55,6 +58,30 @@ export default function LeadsClient({
   const [modalOpen, setModalOpen] = useState(false);
 
   const isAdmin = sesion.rol === "admin";
+
+  // Auto-refresh: realtime sobre `leads` (push instantáneo en INSERT) +
+  // polling cada 30s como red de seguridad si realtime no está habilitado
+  // o el socket cae. router.refresh() re-ejecuta el server component sin
+  // perder el estado local de la tabla (filtros, edits en curso, etc.).
+  useEffect(() => {
+    const supabase = supabaseBrowser();
+
+    const channel = supabase
+      .channel("leads-dashboard")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        () => router.refresh()
+      )
+      .subscribe();
+
+    const interval = setInterval(() => router.refresh(), POLL_INTERVAL_MS);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, [router]);
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -180,20 +207,20 @@ export default function LeadsClient({
       )}
 
       <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-neutral-200 text-sm">
+        <table className="w-full min-w-[1380px] table-fixed divide-y divide-neutral-200 text-sm">
           <thead className="bg-crema text-left text-xs uppercase tracking-wide text-neutral-600">
             <tr>
-              <Th>Fecha</Th>
-              <Th>Nombre</Th>
-              <Th>Usuario</Th>
-              <Th>Celular</Th>
-              <Th>Sede</Th>
-              <Th>Turno</Th>
-              <Th>Día</Th>
-              <Th>Fuente</Th>
-              <Th>Seguidora</Th>
-              <Th>Atendido</Th>
-              <Th>Observación</Th>
+              <Th width="w-[140px]" sticky>Fecha</Th>
+              <Th width="w-[140px]">Nombre</Th>
+              <Th width="w-[120px]">Usuario</Th>
+              <Th width="w-[120px]">Celular</Th>
+              <Th width="w-[110px]">Sede</Th>
+              <Th width="w-[90px]">Turno</Th>
+              <Th width="w-[80px]">Día</Th>
+              <Th width="w-[150px]">Fuente</Th>
+              <Th width="w-[80px]">Seguidora</Th>
+              <Th width="w-[150px]">Atendido</Th>
+              <Th width="min-w-[200px]">Observación</Th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
@@ -253,10 +280,14 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
   const atendidoColor =
     ESTADO_COLORS[atendido] ?? ESTADO_COLORS.no_atendido;
 
+  const fechaStr = formatDate(lead.fecha);
+
   return (
     <tr className="hover:bg-crema/40">
-      <Td>{formatDate(lead.fecha)}</Td>
-      <Td>
+      <Td sticky title={fechaStr}>
+        {fechaStr}
+      </Td>
+      <Td title={lead.nombre ?? undefined}>
         <AdminText
           isAdmin={isAdmin}
           initial={lead.nombre}
@@ -264,25 +295,23 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           saving={saving === "nombre"}
         />
       </Td>
-      <Td>
+      <Td title={lead.usuario ?? undefined}>
         <AdminText
           isAdmin={isAdmin}
           initial={lead.usuario}
           onSave={(v) => patch("usuario", v)}
           saving={saving === "usuario"}
-          width="w-32"
         />
       </Td>
-      <Td>
+      <Td title={lead.celular ?? undefined}>
         <AdminText
           isAdmin={isAdmin}
           initial={lead.celular}
           onSave={(v) => patch("celular", v)}
           saving={saving === "celular"}
-          width="w-32"
         />
       </Td>
-      <Td>
+      <Td title={lead.sede ?? undefined}>
         <AdminSelect
           isAdmin={isAdmin}
           initial={lead.sede}
@@ -291,7 +320,7 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           saving={saving === "sede"}
         />
       </Td>
-      <Td>
+      <Td title={lead.turno ?? undefined}>
         <AdminSelect
           isAdmin={isAdmin}
           initial={lead.turno}
@@ -300,16 +329,15 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           saving={saving === "turno"}
         />
       </Td>
-      <Td>
+      <Td title={lead.dia ?? undefined}>
         <AdminText
           isAdmin={isAdmin}
           initial={lead.dia}
           onSave={(v) => patch("dia", v)}
           saving={saving === "dia"}
-          width="w-24"
         />
       </Td>
-      <Td>
+      <Td title={lead.fuente ? ORIGEN_LABELS[lead.fuente] : undefined}>
         <AdminSelect
           isAdmin={isAdmin}
           initial={lead.fuente}
@@ -319,41 +347,45 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
         />
       </Td>
       <Td>{lead.seguidora == null ? "—" : lead.seguidora ? "Sí" : "No"}</Td>
-      <Td>
-        <select
-          value={atendido}
-          onChange={(e) => {
-            const v = e.target.value as EstadoLead;
-            setAtendido(v);
-            patch("atendido", v);
-          }}
-          className={`rounded border px-2 py-1 text-xs ${atendidoColor}`}
-        >
-          {ESTADO_OPTIONS.map((v) => (
-            <option key={v} value={v}>
-              {ESTADO_LABELS[v]}
-            </option>
-          ))}
-        </select>
-        {saving === "atendido" && (
-          <span className="ml-2 text-[10px] text-neutral-500">guardando…</span>
-        )}
+      <Td title={ESTADO_LABELS[atendido]}>
+        <div className="flex items-center gap-1">
+          <select
+            value={atendido}
+            onChange={(e) => {
+              const v = e.target.value as EstadoLead;
+              setAtendido(v);
+              patch("atendido", v);
+            }}
+            className={`min-w-0 flex-1 rounded border px-2 py-1 text-xs ${atendidoColor}`}
+          >
+            {ESTADO_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {ESTADO_LABELS[v]}
+              </option>
+            ))}
+          </select>
+          {saving === "atendido" && (
+            <span className="shrink-0 text-[10px] text-neutral-500">…</span>
+          )}
+        </div>
       </Td>
-      <Td>
-        <input
-          value={observacion}
-          onChange={(e) => setObservacion(e.target.value)}
-          onBlur={() => {
-            if ((lead.observacion ?? "") !== observacion) {
-              patch("observacion", observacion);
-            }
-          }}
-          placeholder="—"
-          className="w-56 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none"
-        />
-        {saving === "observacion" && (
-          <span className="ml-2 text-[10px] text-neutral-500">guardando…</span>
-        )}
+      <Td title={observacion || undefined}>
+        <div className="flex items-center gap-1">
+          <input
+            value={observacion}
+            onChange={(e) => setObservacion(e.target.value)}
+            onBlur={() => {
+              if ((lead.observacion ?? "") !== observacion) {
+                patch("observacion", observacion);
+              }
+            }}
+            placeholder="—"
+            className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none"
+          />
+          {saving === "observacion" && (
+            <span className="shrink-0 text-[10px] text-neutral-500">…</span>
+          )}
+        </div>
       </Td>
     </tr>
   );
@@ -364,13 +396,11 @@ function AdminText({
   initial,
   onSave,
   saving,
-  width = "w-40",
 }: {
   isAdmin: boolean;
   initial: string | null;
   onSave: (value: string | null) => void;
   saving: boolean;
-  width?: string;
 }) {
   const [val, setVal] = useState(initial ?? "");
   if (!isAdmin) return <>{initial ?? "—"}</>;
@@ -383,9 +413,9 @@ function AdminText({
           const next = val.trim() === "" ? null : val;
           if ((initial ?? null) !== next) onSave(next);
         }}
-        className={`${width} rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none`}
+        className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none"
       />
-      {saving && <span className="text-[10px] text-neutral-500">…</span>}
+      {saving && <span className="shrink-0 text-[10px] text-neutral-500">…</span>}
     </div>
   );
 }
@@ -421,7 +451,7 @@ function AdminSelect({
           const v = e.target.value;
           onSave(v === "" ? null : v);
         }}
-        className="rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none"
+        className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none"
       >
         {optsWithEmpty.map((o) => (
           <option key={o.value} value={o.value}>
@@ -429,7 +459,7 @@ function AdminSelect({
           </option>
         ))}
       </select>
-      {saving && <span className="text-[10px] text-neutral-500">…</span>}
+      {saving && <span className="shrink-0 text-[10px] text-neutral-500">…</span>}
     </div>
   );
 }
@@ -472,12 +502,45 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
-  return <th className="px-4 py-3 font-semibold">{children}</th>;
+function Th({
+  children,
+  width,
+  sticky = false,
+}: {
+  children: React.ReactNode;
+  width: string;
+  sticky?: boolean;
+}) {
+  return (
+    <th
+      className={`px-4 py-3 font-semibold ${width} ${
+        sticky ? "sticky left-0 z-20 bg-crema" : ""
+      }`}
+    >
+      {children}
+    </th>
+  );
 }
 
-function Td({ children }: { children: React.ReactNode }) {
-  return <td className="whitespace-nowrap px-4 py-2">{children}</td>;
+function Td({
+  children,
+  sticky = false,
+  title,
+}: {
+  children: React.ReactNode;
+  sticky?: boolean;
+  title?: string;
+}) {
+  return (
+    <td
+      title={title}
+      className={`truncate px-4 py-2 align-middle ${
+        sticky ? "sticky left-0 z-10 bg-white" : ""
+      }`}
+    >
+      {children}
+    </td>
+  );
 }
 
 function formatDate(iso: string) {
