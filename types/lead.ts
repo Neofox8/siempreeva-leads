@@ -24,6 +24,7 @@ export type Lead = {
   celular: string | null;
   sede: string | null;
   seguidora: boolean | null;
+  num_seguidores: number | null;
   turno: string | null;
   dia: string | null;
   atendido: EstadoLead;

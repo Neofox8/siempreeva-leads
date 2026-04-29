@@ -22,10 +22,12 @@ export default function NewLeadModal({
     setSubmitting(true);
 
     const fd = new FormData(e.currentTarget);
+    const numSeg = String(fd.get("num_seguidores") ?? "").trim();
     const payload = {
       nombre: String(fd.get("nombre") ?? "").trim(),
       celular: String(fd.get("celular") ?? "").trim() || null,
       usuario: String(fd.get("usuario") ?? "").trim() || null,
+      num_seguidores: numSeg === "" ? null : parseInt(numSeg, 10),
       sede: String(fd.get("sede") ?? "") || null,
       fuente: String(fd.get("fuente") ?? "") || "instagram_manychat",
       seguidora: fd.get("seguidora") === "on",
@@ -99,6 +101,16 @@ export default function NewLeadModal({
             <input
               name="usuario"
               placeholder="@handle"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+            />
+          </Field>
+
+          <Field label="Seguidores">
+            <input
+              name="num_seguidores"
+              type="number"
+              min={0}
+              placeholder="Ej: 1500"
               className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
             />
           </Field>

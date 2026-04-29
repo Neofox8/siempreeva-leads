@@ -14,6 +14,7 @@ const ADMIN_FIELDS = new Set([
   "turno",
   "dia",
   "fuente",
+  "num_seguidores",
 ]);
 
 export async function PATCH(
@@ -43,10 +44,19 @@ export async function PATCH(
   const update: Record<string, unknown> = {};
   const ignored: string[] = [];
   for (const [k, v] of Object.entries(body)) {
-    if (allowed.has(k)) {
-      update[k] = v === "" ? null : v;
-    } else {
+    if (!allowed.has(k)) {
       ignored.push(k);
+      continue;
+    }
+    if (k === "num_seguidores") {
+      if (v === "" || v == null) {
+        update[k] = null;
+      } else {
+        const n = typeof v === "number" ? v : parseInt(String(v), 10);
+        update[k] = Number.isFinite(n) ? n : null;
+      }
+    } else {
+      update[k] = v === "" ? null : v;
     }
   }
 

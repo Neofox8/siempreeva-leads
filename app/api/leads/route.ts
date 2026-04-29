@@ -21,6 +21,14 @@ function clean(value: unknown): string | null {
   return s.length ? s : null;
 }
 
+function toInt(value: unknown): number | null {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -44,6 +52,7 @@ export async function POST(req: NextRequest) {
     celular: clean(payload.celular),
     sede: clean(payload.sede),
     seguidora: toBool(payload.seguidora),
+    num_seguidores: toInt(payload.num_seguidores),
     turno: clean(payload.turno),
     dia: clean(payload.dia),
     fuente,

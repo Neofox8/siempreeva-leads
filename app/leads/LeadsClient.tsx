@@ -207,26 +207,30 @@ export default function LeadsClient({
       )}
 
       <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
-        <table className="w-full table-fixed divide-y divide-neutral-200 text-sm">
-          <thead className="bg-crema text-left text-xs uppercase tracking-wide text-neutral-600">
+        <table className="w-full table-fixed divide-y divide-neutral-200 text-xs">
+          <thead className="bg-crema text-left text-[10px] uppercase tracking-wide text-neutral-600">
             <tr>
-              <Th width="w-[100px]">Fecha</Th>
-              <Th width="w-[140px]">Nombre</Th>
-              <Th width="w-[110px]">Celular</Th>
-              <Th width="w-[110px]">Sede</Th>
-              <Th width="w-[90px]">Turno</Th>
-              <Th width="w-[140px]">Fuente</Th>
-              <Th width="w-[140px]">Atendido</Th>
-              <Th width="min-w-[180px]">Observación</Th>
-              {isAdmin && <Th width="w-[110px]">{""}</Th>}
+              <Th width="w-[75px]">Fecha</Th>
+              <Th width="w-[100px]">Nombre</Th>
+              <Th width="w-[75px]">Usuario</Th>
+              <Th width="w-[65px]">Seguidores</Th>
+              <Th width="w-[85px]">Celular</Th>
+              <Th width="w-[75px]">Sede</Th>
+              <Th width="w-[65px]">Turno</Th>
+              <Th width="w-[55px]">Día</Th>
+              <Th width="w-[95px]">Fuente</Th>
+              <Th width="w-[55px]">Seg.</Th>
+              <Th width="w-[100px]">Atendido</Th>
+              <Th width="min-w-[100px]">Observación</Th>
+              {isAdmin && <Th width="w-[95px]">{""}</Th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
             {leads.length === 0 ? (
               <tr>
                 <td
-                  colSpan={isAdmin ? 9 : 8}
-                  className="px-4 py-10 text-center text-neutral-500"
+                  colSpan={isAdmin ? 13 : 12}
+                  className="px-2 py-10 text-center text-neutral-500"
                 >
                   No hay leads para los filtros aplicados.
                 </td>
@@ -300,6 +304,11 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
   const fechaShort = formatDate(lead.fecha);
   const fechaFull = formatDateFull(lead.fecha);
 
+  const seguidoresStr =
+    lead.num_seguidores == null
+      ? "—"
+      : lead.num_seguidores.toLocaleString("es-PE");
+
   return (
     <tr className="hover:bg-crema/40">
       <Td title={fechaFull}>{fechaShort}</Td>
@@ -309,6 +318,22 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           initial={lead.nombre}
           onSave={(v) => patch("nombre", v)}
           saving={saving === "nombre"}
+        />
+      </Td>
+      <Td title={lead.usuario ?? undefined}>
+        <AdminText
+          isAdmin={isAdmin}
+          initial={lead.usuario}
+          onSave={(v) => patch("usuario", v)}
+          saving={saving === "usuario"}
+        />
+      </Td>
+      <Td title={seguidoresStr}>
+        <AdminNumber
+          isAdmin={isAdmin}
+          initial={lead.num_seguidores}
+          onSave={(v) => patch("num_seguidores", v)}
+          saving={saving === "num_seguidores"}
         />
       </Td>
       <Td title={lead.celular ?? undefined}>
@@ -337,6 +362,14 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           saving={saving === "turno"}
         />
       </Td>
+      <Td title={lead.dia ?? undefined}>
+        <AdminText
+          isAdmin={isAdmin}
+          initial={lead.dia}
+          onSave={(v) => patch("dia", v)}
+          saving={saving === "dia"}
+        />
+      </Td>
       <Td title={lead.fuente ? ORIGEN_LABELS[lead.fuente] : undefined}>
         <AdminSelect
           isAdmin={isAdmin}
@@ -346,6 +379,7 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           saving={saving === "fuente"}
         />
       </Td>
+      <Td>{lead.seguidora == null ? "—" : lead.seguidora ? "Sí" : "No"}</Td>
       <Td title={ESTADO_LABELS[atendido]}>
         <div className="flex items-center gap-1">
           <select
@@ -452,6 +486,48 @@ function AdminText({
   );
 }
 
+function AdminNumber({
+  isAdmin,
+  initial,
+  onSave,
+  saving,
+}: {
+  isAdmin: boolean;
+  initial: number | null;
+  onSave: (value: number | null) => void;
+  saving: boolean;
+}) {
+  const [val, setVal] = useState(initial == null ? "" : String(initial));
+  if (!isAdmin) {
+    return (
+      <>{initial == null ? "—" : initial.toLocaleString("es-PE")}</>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        type="number"
+        min={0}
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={() => {
+          const trimmed = val.trim();
+          let next: number | null;
+          if (trimmed === "") {
+            next = null;
+          } else {
+            const n = parseInt(trimmed, 10);
+            next = Number.isFinite(n) ? n : null;
+          }
+          if ((initial ?? null) !== next) onSave(next);
+        }}
+        className="min-w-0 flex-1 rounded border border-neutral-200 px-1 py-0.5 text-xs focus:border-berry focus:outline-none"
+      />
+      {saving && <span className="shrink-0 text-[10px] text-neutral-500">…</span>}
+    </div>
+  );
+}
+
 function AdminSelect({
   isAdmin,
   initial,
@@ -541,7 +617,7 @@ function Th({
   children: React.ReactNode;
   width: string;
 }) {
-  return <th className={`px-4 py-3 font-semibold ${width}`}>{children}</th>;
+  return <th className={`px-2 py-1 font-semibold ${width}`}>{children}</th>;
 }
 
 function Td({
@@ -552,7 +628,7 @@ function Td({
   title?: string;
 }) {
   return (
-    <td title={title} className="truncate px-4 py-2 align-middle">
+    <td title={title} className="truncate px-2 py-1 align-middle">
       {children}
     </td>
   );
