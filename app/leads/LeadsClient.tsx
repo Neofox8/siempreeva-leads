@@ -96,7 +96,7 @@ export default function LeadsClient({
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
+    <div className="px-6 py-8">
       <header className="mb-8">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -208,21 +208,21 @@ export default function LeadsClient({
 
       <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
         <table className="w-full table-fixed divide-y divide-neutral-200 text-xs">
-          <thead className="bg-crema text-left text-[10px] uppercase tracking-wide text-neutral-600">
+          <thead className="bg-crema text-left text-xs text-neutral-600">
             <tr>
-              <Th width="w-[75px]">Fecha</Th>
-              <Th width="w-[100px]">Nombre</Th>
-              <Th width="w-[75px]">Usuario</Th>
-              <Th width="w-[65px]">Seguidores</Th>
-              <Th width="w-[85px]">Celular</Th>
-              <Th width="w-[75px]">Sede</Th>
-              <Th width="w-[65px]">Turno</Th>
-              <Th width="w-[55px]">Día</Th>
-              <Th width="w-[95px]">Fuente</Th>
-              <Th width="w-[55px]">Seg.</Th>
-              <Th width="w-[100px]">Atendido</Th>
-              <Th width="min-w-[100px]">Observación</Th>
-              {isAdmin && <Th width="w-[95px]">{""}</Th>}
+              <Th width="w-[90px]">Fecha</Th>
+              <Th width="w-[130px]">Nombre</Th>
+              <Th width="w-[100px]">Usuario</Th>
+              <Th width="w-[90px]">Seguidores</Th>
+              <Th width="w-[110px]">Celular</Th>
+              <Th width="w-[100px]">Sede</Th>
+              <Th width="w-[90px]">Turno</Th>
+              <Th width="w-[70px]">Día</Th>
+              <Th width="w-[120px]">Fuente</Th>
+              <Th width="w-[60px]">Seg.</Th>
+              <Th width="w-[130px]">Atendido</Th>
+              <Th width="min-w-[140px]">Observación</Th>
+              {isAdmin && <Th width="w-[70px]">{""}</Th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
@@ -421,37 +421,39 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
         </div>
       </Td>
       {isAdmin && (
-        <Td>
-          {confirmDelete ? (
-            <div className="flex items-center gap-1 text-[11px]">
-              <span className="text-neutral-600">¿Confirmar?</span>
+        <td className="px-2 py-1 align-middle">
+          <div className="relative inline-block">
+            {confirmDelete ? (
+              <div className="absolute right-0 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-md bg-white px-2 py-1 shadow-md ring-1 ring-neutral-200">
+                <span className="text-[11px] text-neutral-700">¿Confirmar?</span>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="rounded bg-red-600 px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                >
+                  {deleting ? "…" : "Sí"}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={deleting}
+                  className="text-neutral-500 hover:text-neutral-800"
+                  aria-label="Cancelar"
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
               <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="rounded bg-red-600 px-2 py-0.5 font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-              >
-                {deleting ? "…" : "Sí"}
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                disabled={deleting}
-                className="text-neutral-500 hover:text-neutral-800"
-                aria-label="Cancelar"
+                onClick={() => setConfirmDelete(true)}
+                className="text-base leading-none text-neutral-400 hover:text-red-600"
+                aria-label="Eliminar lead"
+                title="Eliminar"
               >
                 ×
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="text-base leading-none text-neutral-400 hover:text-red-600"
-              aria-label="Eliminar lead"
-              title="Eliminar"
-            >
-              ×
-            </button>
-          )}
-        </Td>
+            )}
+          </div>
+        </td>
       )}
     </tr>
   );
@@ -618,7 +620,7 @@ function Th({
   width: string;
 }) {
   return (
-    <th className={`truncate px-3 py-1 font-semibold ${width}`}>{children}</th>
+    <th className={`truncate px-3 py-1 font-medium ${width}`}>{children}</th>
   );
 }
 
