@@ -2,7 +2,16 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, useCallback } from "react";
-import type { Lead } from "@/types/lead";
+import type { EstadoLead, Lead, SesionUsuario } from "@/types/lead";
+import {
+  ESTADO_COLORS,
+  ESTADO_LABELS,
+  ESTADO_OPTIONS,
+  ORIGEN_LABELS,
+  ORIGEN_OPTIONS,
+} from "@/lib/enums";
+import { signOutAction } from "@/app/login/actions";
+import NewLeadModal from "./NewLeadModal";
 
 type Stats = {
   total: number;
@@ -17,12 +26,24 @@ type Filters = {
   q: string;
 };
 
+type Opt = { value: string; label: string };
+
+const SEDE_OPTIONS: string[] = ["San Miguel", "Miraflores"];
+const TURNO_OPTIONS: string[] = ["Mañana", "Tarde", "Noche"];
+
+const FUENTE_OPTS: Opt[] = ORIGEN_OPTIONS.map((v) => ({
+  value: v,
+  label: ORIGEN_LABELS[v],
+}));
+
 export default function LeadsClient({
+  sesion,
   leads,
   error,
   stats,
   filters,
 }: {
+  sesion: SesionUsuario;
   leads: Lead[];
   error: string | null;
   stats: Stats;
@@ -31,6 +52,9 @@ export default function LeadsClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const isAdmin = sesion.rol === "admin";
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -47,12 +71,32 @@ export default function LeadsClient({
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <header className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-berry">Siempre Eva — Leads</h1>
             <p className="text-sm text-neutral-600">
               Gestión y seguimiento de leads desde ManyChat
             </p>
+          </div>
+          <div className="flex flex-col items-end gap-2 text-right">
+            <div className="text-xs text-neutral-600">
+              <div className="font-medium text-neutral-800">
+                {sesion.nombre ?? sesion.email ?? "Usuario"}
+              </div>
+              <div>
+                <span className="rounded bg-berry/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-berry">
+                  {sesion.rol}
+                </span>
+              </div>
+            </div>
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                className="rounded border border-berry px-3 py-1 text-xs text-berry hover:bg-berry hover:text-white"
+              >
+                Cerrar sesión
+              </button>
+            </form>
           </div>
         </div>
 
@@ -81,8 +125,11 @@ export default function LeadsClient({
             className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
           >
             <option value="">Todas</option>
-            <option value="San Miguel">San Miguel</option>
-            <option value="Miraflores">Miraflores</option>
+            {SEDE_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
         </Field>
 
@@ -93,8 +140,11 @@ export default function LeadsClient({
             className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
           >
             <option value="">Todos</option>
-            <option value="Atendido">Atendido</option>
-            <option value="No Atendido">No Atendido</option>
+            {ESTADO_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {ESTADO_LABELS[v]}
+              </option>
+            ))}
           </select>
         </Field>
 
@@ -103,7 +153,7 @@ export default function LeadsClient({
             onClick={() => {
               startTransition(() => router.replace("/leads"));
             }}
-            className="ml-auto rounded border border-berry px-3 py-2 text-sm text-berry hover:bg-berry hover:text-white"
+            className="rounded border border-berry px-3 py-2 text-sm text-berry hover:bg-berry hover:text-white"
           >
             Limpiar filtros
           </button>
@@ -111,6 +161,15 @@ export default function LeadsClient({
 
         {isPending && (
           <span className="text-xs text-neutral-500">Actualizando…</span>
+        )}
+
+        {isAdmin && (
+          <button
+            onClick={() => setModalOpen(true)}
+            className="ml-auto rounded bg-berry px-4 py-2 text-sm font-semibold text-white hover:bg-berry/90"
+          >
+            + Nuevo lead
+          </button>
         )}
       </section>
 
@@ -131,6 +190,7 @@ export default function LeadsClient({
               <Th>Sede</Th>
               <Th>Turno</Th>
               <Th>Día</Th>
+              <Th>Fuente</Th>
               <Th>Seguidora</Th>
               <Th>Atendido</Th>
               <Th>Observación</Th>
@@ -140,28 +200,40 @@ export default function LeadsClient({
             {leads.length === 0 ? (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={11}
                   className="px-4 py-10 text-center text-neutral-500"
                 >
                   No hay leads para los filtros aplicados.
                 </td>
               </tr>
             ) : (
-              leads.map((lead) => <Row key={lead.id} lead={lead} />)
+              leads.map((lead) => (
+                <Row key={lead.id} lead={lead} isAdmin={isAdmin} />
+              ))
             )}
           </tbody>
         </table>
       </div>
+
+      {modalOpen && (
+        <NewLeadModal
+          onClose={() => setModalOpen(false)}
+          onCreated={() => {
+            setModalOpen(false);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function Row({ lead }: { lead: Lead }) {
-  const [atendido, setAtendido] = useState(lead.atendido);
+function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
+  const [atendido, setAtendido] = useState<EstadoLead>(lead.atendido);
   const [observacion, setObservacion] = useState(lead.observacion ?? "");
-  const [saving, setSaving] = useState<null | "atendido" | "observacion">(null);
+  const [saving, setSaving] = useState<string | null>(null);
 
-  async function patch(field: "atendido" | "observacion", value: string) {
+  async function patch(field: string, value: unknown) {
     setSaving(field);
     try {
       const res = await fetch(`/api/leads/${lead.id}`, {
@@ -178,31 +250,90 @@ function Row({ lead }: { lead: Lead }) {
     }
   }
 
+  const atendidoColor =
+    ESTADO_COLORS[atendido] ?? ESTADO_COLORS.no_atendido;
+
   return (
     <tr className="hover:bg-crema/40">
       <Td>{formatDate(lead.fecha)}</Td>
-      <Td>{lead.nombre ?? "—"}</Td>
-      <Td>{lead.usuario ?? "—"}</Td>
-      <Td>{lead.celular ?? "—"}</Td>
-      <Td>{lead.sede ?? "—"}</Td>
-      <Td>{lead.turno ?? "—"}</Td>
-      <Td>{lead.dia ?? "—"}</Td>
+      <Td>
+        <AdminText
+          isAdmin={isAdmin}
+          initial={lead.nombre}
+          onSave={(v) => patch("nombre", v)}
+          saving={saving === "nombre"}
+        />
+      </Td>
+      <Td>
+        <AdminText
+          isAdmin={isAdmin}
+          initial={lead.usuario}
+          onSave={(v) => patch("usuario", v)}
+          saving={saving === "usuario"}
+          width="w-32"
+        />
+      </Td>
+      <Td>
+        <AdminText
+          isAdmin={isAdmin}
+          initial={lead.celular}
+          onSave={(v) => patch("celular", v)}
+          saving={saving === "celular"}
+          width="w-32"
+        />
+      </Td>
+      <Td>
+        <AdminSelect
+          isAdmin={isAdmin}
+          initial={lead.sede}
+          options={SEDE_OPTIONS.map((s) => ({ value: s, label: s }))}
+          onSave={(v) => patch("sede", v)}
+          saving={saving === "sede"}
+        />
+      </Td>
+      <Td>
+        <AdminSelect
+          isAdmin={isAdmin}
+          initial={lead.turno}
+          options={TURNO_OPTIONS.map((t) => ({ value: t, label: t }))}
+          onSave={(v) => patch("turno", v)}
+          saving={saving === "turno"}
+        />
+      </Td>
+      <Td>
+        <AdminText
+          isAdmin={isAdmin}
+          initial={lead.dia}
+          onSave={(v) => patch("dia", v)}
+          saving={saving === "dia"}
+          width="w-24"
+        />
+      </Td>
+      <Td>
+        <AdminSelect
+          isAdmin={isAdmin}
+          initial={lead.fuente}
+          options={FUENTE_OPTS}
+          onSave={(v) => patch("fuente", v)}
+          saving={saving === "fuente"}
+        />
+      </Td>
       <Td>{lead.seguidora == null ? "—" : lead.seguidora ? "Sí" : "No"}</Td>
       <Td>
         <select
           value={atendido}
           onChange={(e) => {
-            setAtendido(e.target.value);
-            patch("atendido", e.target.value);
+            const v = e.target.value as EstadoLead;
+            setAtendido(v);
+            patch("atendido", v);
           }}
-          className={`rounded border px-2 py-1 text-xs ${
-            atendido === "Atendido"
-              ? "border-green-300 bg-green-50 text-green-800"
-              : "border-amber-300 bg-amber-50 text-amber-800"
-          }`}
+          className={`rounded border px-2 py-1 text-xs ${atendidoColor}`}
         >
-          <option value="Atendido">Atendido</option>
-          <option value="No Atendido">No Atendido</option>
+          {ESTADO_OPTIONS.map((v) => (
+            <option key={v} value={v}>
+              {ESTADO_LABELS[v]}
+            </option>
+          ))}
         </select>
         {saving === "atendido" && (
           <span className="ml-2 text-[10px] text-neutral-500">guardando…</span>
@@ -225,6 +356,81 @@ function Row({ lead }: { lead: Lead }) {
         )}
       </Td>
     </tr>
+  );
+}
+
+function AdminText({
+  isAdmin,
+  initial,
+  onSave,
+  saving,
+  width = "w-40",
+}: {
+  isAdmin: boolean;
+  initial: string | null;
+  onSave: (value: string | null) => void;
+  saving: boolean;
+  width?: string;
+}) {
+  const [val, setVal] = useState(initial ?? "");
+  if (!isAdmin) return <>{initial ?? "—"}</>;
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={() => {
+          const next = val.trim() === "" ? null : val;
+          if ((initial ?? null) !== next) onSave(next);
+        }}
+        className={`${width} rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none`}
+      />
+      {saving && <span className="text-[10px] text-neutral-500">…</span>}
+    </div>
+  );
+}
+
+function AdminSelect({
+  isAdmin,
+  initial,
+  options,
+  onSave,
+  saving,
+}: {
+  isAdmin: boolean;
+  initial: string | null;
+  options: Opt[];
+  onSave: (value: string | null) => void;
+  saving: boolean;
+}) {
+  const currentLabel =
+    options.find((o) => o.value === (initial ?? ""))?.label ?? initial ?? "—";
+
+  if (!isAdmin) return <>{currentLabel}</>;
+
+  const optsWithEmpty: Opt[] =
+    options.some((o) => o.value === "")
+      ? options
+      : [{ value: "", label: "—" }, ...options];
+
+  return (
+    <div className="flex items-center gap-1">
+      <select
+        value={initial ?? ""}
+        onChange={(e) => {
+          const v = e.target.value;
+          onSave(v === "" ? null : v);
+        }}
+        className="rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none"
+      >
+        {optsWithEmpty.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {saving && <span className="text-[10px] text-neutral-500">…</span>}
+    </div>
   );
 }
 

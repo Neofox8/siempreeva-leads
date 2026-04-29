@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { getSesion } from "@/lib/auth";
 import type { Lead } from "@/types/lead";
 import LeadsClient from "./LeadsClient";
 
@@ -16,6 +18,9 @@ export default async function LeadsPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const sesion = await getSesion();
+  if (!sesion) redirect("/login?redirect=/leads");
+
   const supabase = supabaseAdmin();
 
   let query = supabase
@@ -36,7 +41,7 @@ export default async function LeadsPage({
       supabase
         .from("leads")
         .select("*", { count: "exact", head: true })
-        .eq("atendido", "No Atendido"),
+        .eq("atendido", "no_atendido"),
       supabase
         .from("leads")
         .select("*", { count: "exact", head: true })
@@ -49,6 +54,7 @@ export default async function LeadsPage({
 
   return (
     <LeadsClient
+      sesion={sesion}
       leads={(leads ?? []) as Lead[]}
       error={error?.message ?? null}
       stats={{
