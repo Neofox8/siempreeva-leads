@@ -2,6 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createMiddlewareClient } from "@/lib/supabase/middleware";
 
 export async function middleware(req: NextRequest) {
+  // El webhook POST /api/leads es público — ManyChat no tiene sesión
+  if (req.nextUrl.pathname === "/api/leads" && req.method === "POST") {
+    return NextResponse.next();
+  }
+
   const { supabase, getResponse } = createMiddlewareClient(req);
   const {
     data: { user },
@@ -22,9 +27,6 @@ export async function middleware(req: NextRequest) {
   return getResponse();
 }
 
-// Protegemos:
-//   /leads y subrutas        → dashboard
-//   /api/leads/<id>          → PATCH inline edit (NO el POST raíz, que es el webhook público)
 export const config = {
-  matcher: ["/leads", "/leads/:path*", "/api/leads/:id"],
+  matcher: ["/leads", "/leads/:path*", "/api/leads/:path*"],
 };
