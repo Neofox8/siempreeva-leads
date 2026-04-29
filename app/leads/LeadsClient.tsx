@@ -617,7 +617,9 @@ function Th({
   children: React.ReactNode;
   width: string;
 }) {
-  return <th className={`px-2 py-1 font-semibold ${width}`}>{children}</th>;
+  return (
+    <th className={`truncate px-3 py-1 font-semibold ${width}`}>{children}</th>
+  );
 }
 
 function Td({
