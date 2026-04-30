@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition, useCallback, useEffect } from "react";
+import { useState, useTransition, useCallback, useEffect, useRef } from "react";
 import type { EstadoLead, Lead, SesionUsuario } from "@/types/lead";
 import {
   ESTADO_COLORS,
@@ -56,13 +56,24 @@ export default function LeadsClient({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [modalOpen, setModalOpen] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<number>(() => Date.now());
+  const pollIdRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isAdmin = sesion.rol === "admin";
 
+  const doRefresh = useCallback(() => {
+    try {
+      router.refresh();
+      setLastRefresh(Date.now());
+    } catch (err) {
+      console.error("[leads] refresh failed silently:", err);
+    }
+  }, [router]);
+
   // Auto-refresh: realtime sobre `leads` (push instantáneo en INSERT) +
   // polling cada 30s como red de seguridad si realtime no está habilitado
-  // o el socket cae. router.refresh() re-ejecuta el server component sin
-  // perder el estado local de la tabla (filtros, edits en curso, etc.).
+  // o el socket cae. Pausa cuando la pestaña pasa a background y reanuda
+  // con un refresh inmediato cuando vuelve a estar visible.
   useEffect(() => {
     const supabase = supabaseBrowser();
 
@@ -71,17 +82,52 @@ export default function LeadsClient({
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "leads" },
-        () => router.refresh()
+        () => doRefresh()
       )
       .subscribe();
 
-    const interval = setInterval(() => router.refresh(), POLL_INTERVAL_MS);
+    const startPolling = () => {
+      if (pollIdRef.current !== null) return;
+      pollIdRef.current = setInterval(doRefresh, POLL_INTERVAL_MS);
+    };
+
+    const stopPolling = () => {
+      if (pollIdRef.current !== null) {
+        clearInterval(pollIdRef.current);
+        pollIdRef.current = null;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        doRefresh();
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    if (document.visibilityState === "visible") {
+      startPolling();
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(interval);
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [router]);
+  }, [doRefresh]);
+
+  const handleManualRefresh = useCallback(() => {
+    doRefresh();
+    // Resetear el ciclo de 30s para que el próximo poll automático
+    // se mida desde este click, no desde el último tick del interval.
+    if (pollIdRef.current !== null) {
+      clearInterval(pollIdRef.current);
+      pollIdRef.current = setInterval(doRefresh, POLL_INTERVAL_MS);
+    }
+  }, [doRefresh]);
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -199,6 +245,11 @@ export default function LeadsClient({
           </button>
         )}
       </section>
+
+      <LastRefreshIndicator
+        lastRefresh={lastRefresh}
+        onManualRefresh={handleManualRefresh}
+      />
 
       {error && (
         <div className="mb-4 rounded bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -662,4 +713,68 @@ function formatDateFull(iso: string) {
   } catch {
     return iso;
   }
+}
+
+function formatAgo(ms: number): string {
+  const sec = Math.max(0, Math.floor(ms / 1000));
+  if (sec < 5) return "Actualizado hace un momento";
+  if (sec < 60) return `Actualizado hace ${sec} segundos`;
+  const min = Math.floor(sec / 60);
+  if (min === 1) return "Actualizado hace 1 minuto";
+  if (min < 60) return `Actualizado hace ${min} minutos`;
+  const hr = Math.floor(min / 60);
+  if (hr === 1) return "Actualizado hace 1 hora";
+  return `Actualizado hace ${hr} horas`;
+}
+
+function RefreshIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+    </svg>
+  );
+}
+
+// Aislado en su propio componente: el tick de "now" cada 1s sólo re-renderiza
+// este nodo, no toda la tabla con sus N filas editables.
+function LastRefreshIndicator({
+  lastRefresh,
+  onManualRefresh,
+}: {
+  lastRefresh: number;
+  onManualRefresh: () => void;
+}) {
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1_000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="mb-2 flex items-center justify-end gap-2 text-xs text-neutral-500">
+      <span>{formatAgo(now - lastRefresh)}</span>
+      <button
+        type="button"
+        onClick={onManualRefresh}
+        aria-label="Refrescar ahora"
+        title="Refrescar ahora"
+        className="rounded p-1 text-neutral-500 hover:bg-neutral-200/60 hover:text-neutral-800"
+      >
+        <RefreshIcon />
+      </button>
+    </div>
+  );
 }
