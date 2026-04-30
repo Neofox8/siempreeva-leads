@@ -353,7 +353,7 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
     ESTADO_COLORS[atendido] ?? ESTADO_COLORS.no_atendido;
 
   const fechaShort = formatDate(lead.fecha);
-  const fechaFull = formatDateFull(lead.fecha);
+  const fechaFull = formatDateFull(lead.creado_en);
 
   const seguidoresStr =
     lead.num_seguidores == null
@@ -362,7 +362,14 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
 
   return (
     <tr className="hover:bg-crema/40">
-      <Td title={fechaFull}>{fechaShort}</Td>
+      <Td>
+        <span
+          title={fechaFull}
+          style={{ borderBottom: "1px dotted #aaa", cursor: "default" }}
+        >
+          {fechaShort}
+        </span>
+      </Td>
       <Td title={lead.nombre ?? undefined}>
         <AdminText
           isAdmin={isAdmin}
@@ -703,13 +710,25 @@ function formatDate(iso: string) {
 
 function formatDateFull(iso: string) {
   try {
-    return new Date(iso).toLocaleString("es-PE", {
+    const fmt = new Intl.DateTimeFormat("es-PE", {
+      timeZone: "America/Lima",
       day: "2-digit",
       month: "2-digit",
-      year: "2-digit",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
+    const parts = fmt.formatToParts(new Date(iso));
+    const get = (t: Intl.DateTimeFormatPartTypes): string =>
+      parts.find((p) => p.type === t)?.value ?? "";
+    const day = get("day");
+    const month = get("month");
+    const year = get("year");
+    let hour = get("hour");
+    if (hour === "24") hour = "00";
+    const minute = get("minute");
+    return `${day}/${month}/${year} · ${hour}:${minute}`;
   } catch {
     return iso;
   }
