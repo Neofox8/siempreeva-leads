@@ -146,7 +146,7 @@ export default function LeadsClient({
       <header className="mb-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-berry">Siempre Eva — Leads</h1>
+            <h1 className="text-3xl font-bold text-eva">Siempre Eva — Leads</h1>
             <p className="text-sm text-neutral-600">
               Gestión y seguimiento de leads desde ManyChat
             </p>
@@ -157,7 +157,7 @@ export default function LeadsClient({
                 {sesion.nombre ?? sesion.email ?? "Usuario"}
               </div>
               <div>
-                <span className="rounded bg-berry/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-berry">
+                <span className="rounded bg-eva/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-eva">
                   {sesion.rol}
                 </span>
               </div>
@@ -165,7 +165,7 @@ export default function LeadsClient({
             <form action={signOutAction}>
               <button
                 type="submit"
-                className="rounded border border-berry px-3 py-1 text-xs text-berry hover:bg-berry hover:text-white"
+                className="rounded border border-eva px-3 py-1 text-xs text-eva hover:bg-eva-dark hover:text-white"
               >
                 Cerrar sesión
               </button>
@@ -187,7 +187,7 @@ export default function LeadsClient({
             defaultValue={filters.q}
             onChange={(e) => updateParam("q", e.target.value)}
             placeholder="Ej: María"
-            className="w-56 rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+            className="w-56 rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
           />
         </Field>
 
@@ -195,7 +195,7 @@ export default function LeadsClient({
           <select
             value={filters.sede}
             onChange={(e) => updateParam("sede", e.target.value)}
-            className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+            className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
           >
             <option value="">Todas</option>
             {SEDE_OPTIONS.map((s) => (
@@ -210,7 +210,7 @@ export default function LeadsClient({
           <select
             value={filters.atendido}
             onChange={(e) => updateParam("atendido", e.target.value)}
-            className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+            className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
           >
             <option value="">Todos</option>
             {ESTADO_OPTIONS.map((v) => (
@@ -226,7 +226,7 @@ export default function LeadsClient({
             onClick={() => {
               startTransition(() => router.replace("/leads"));
             }}
-            className="rounded border border-berry px-3 py-2 text-sm text-berry hover:bg-berry hover:text-white"
+            className="rounded border border-eva px-3 py-2 text-sm text-eva hover:bg-eva-dark hover:text-white"
           >
             Limpiar filtros
           </button>
@@ -239,7 +239,7 @@ export default function LeadsClient({
         {isAdmin && (
           <button
             onClick={() => setModalOpen(true)}
-            className="ml-auto rounded bg-berry px-4 py-2 text-sm font-semibold text-white hover:bg-berry/90"
+            className="ml-auto rounded bg-eva px-4 py-2 text-sm font-semibold text-white hover:bg-eva-dark"
           >
             + Nuevo lead
           </button>
@@ -259,7 +259,7 @@ export default function LeadsClient({
 
       <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
         <table className="w-full table-fixed divide-y divide-neutral-200 text-xs">
-          <thead className="bg-crema text-left text-xs text-neutral-600">
+          <thead className="bg-eva-bg text-left text-xs text-neutral-600">
             <tr>
               <Th width="w-[90px]">Fecha</Th>
               <Th width="w-[130px]">Nombre</Th>
@@ -361,7 +361,7 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
       : lead.num_seguidores.toLocaleString("es-PE");
 
   return (
-    <tr className="hover:bg-crema/40">
+    <tr className="hover:bg-eva-bg/40">
       <Td>
         <span
           title={fechaFull}
@@ -471,7 +471,7 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
               }
             }}
             placeholder="—"
-            className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none"
+            className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-eva focus:outline-none"
           />
           {saving === "observacion" && (
             <span className="shrink-0 text-[10px] text-neutral-500">…</span>
@@ -539,7 +539,7 @@ function AdminText({
           const next = val.trim() === "" ? null : val;
           if ((initial ?? null) !== next) onSave(next);
         }}
-        className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none"
+        className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-eva focus:outline-none"
       />
       {saving && <span className="shrink-0 text-[10px] text-neutral-500">…</span>}
     </div>
@@ -581,7 +581,7 @@ function AdminNumber({
           }
           if ((initial ?? null) !== next) onSave(next);
         }}
-        className="min-w-0 flex-1 rounded border border-neutral-200 px-1 py-0.5 text-xs focus:border-berry focus:outline-none"
+        className="min-w-0 flex-1 rounded border border-neutral-200 px-1 py-0.5 text-xs focus:border-eva focus:outline-none"
       />
       {saving && <span className="shrink-0 text-[10px] text-neutral-500">…</span>}
     </div>
@@ -619,7 +619,7 @@ function AdminSelect({
           const v = e.target.value;
           onSave(v === "" ? null : v);
         }}
-        className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-berry focus:outline-none"
+        className="min-w-0 flex-1 rounded border border-neutral-200 px-2 py-1 text-xs focus:border-eva focus:outline-none"
       >
         {optsWithEmpty.map((o) => (
           <option key={o.value} value={o.value}>
@@ -644,7 +644,7 @@ function StatCard({
   return (
     <div
       className={`rounded-lg p-4 shadow-sm ${
-        accent ? "bg-berry text-white" : "bg-white"
+        accent ? "bg-eva text-white" : "bg-white"
       }`}
     >
       <div

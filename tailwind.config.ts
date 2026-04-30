@@ -9,8 +9,10 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        berry: "#8B2252",
-        crema: "#F5EFE8",
+        eva: "#7CB342",
+        "eva-light": "#AED581",
+        "eva-dark": "#558B2F",
+        "eva-bg": "#F8FBF4",
       },
       fontFamily: {
         sans: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],

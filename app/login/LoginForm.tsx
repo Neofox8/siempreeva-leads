@@ -22,7 +22,7 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
           type="email"
           autoComplete="email"
           required
-          className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+          className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
         />
       </label>
 
@@ -34,7 +34,7 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
           name="password"
           autoComplete="current-password"
           required
-          className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+          className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
         />
       </label>
 
@@ -55,7 +55,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded bg-berry px-4 py-2 text-sm font-semibold text-white hover:bg-berry/90 disabled:opacity-60"
+      className="rounded bg-eva px-4 py-2 text-sm font-semibold text-white hover:bg-eva-dark disabled:opacity-60"
     >
       {pending ? "Ingresando…" : "Ingresar"}
     </button>

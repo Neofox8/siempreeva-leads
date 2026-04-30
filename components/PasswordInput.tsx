@@ -29,7 +29,7 @@ const PasswordInput = forwardRef<HTMLInputElement, Props>(function PasswordInput
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
         aria-pressed={visible}
-        className="absolute inset-y-0 right-2 flex items-center text-neutral-500 hover:text-berry"
+        className="absolute inset-y-0 right-2 flex items-center text-neutral-500 hover:text-eva-dark"
       >
         {visible ? <EyeOffIcon /> : <EyeIcon />}
       </button>

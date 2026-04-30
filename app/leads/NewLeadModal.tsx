@@ -71,7 +71,7 @@ export default function NewLeadModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-berry">Nuevo lead</h2>
+          <h2 className="text-xl font-bold text-eva">Nuevo lead</h2>
           <button
             onClick={onClose}
             className="text-neutral-500 hover:text-neutral-800"
@@ -86,14 +86,14 @@ export default function NewLeadModal({
             <input
               name="nombre"
               required
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
             />
           </Field>
 
           <Field label="Celular">
             <input
               name="celular"
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
             />
           </Field>
 
@@ -101,7 +101,7 @@ export default function NewLeadModal({
             <input
               name="usuario"
               placeholder="@handle"
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
             />
           </Field>
 
@@ -111,7 +111,7 @@ export default function NewLeadModal({
               type="number"
               min={0}
               placeholder="Ej: 1500"
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
             />
           </Field>
 
@@ -119,7 +119,7 @@ export default function NewLeadModal({
             <select
               name="sede"
               defaultValue=""
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
             >
               <option value="">—</option>
               {SEDES.map((s) => (
@@ -134,7 +134,7 @@ export default function NewLeadModal({
             <select
               name="fuente"
               defaultValue="instagram_manychat"
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
             >
               {ORIGEN_OPTIONS.map((v) => (
                 <option key={v} value={v}>
@@ -148,7 +148,7 @@ export default function NewLeadModal({
             <select
               name="turno"
               defaultValue=""
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
             >
               <option value="">—</option>
               {TURNOS.map((t) => (
@@ -163,12 +163,12 @@ export default function NewLeadModal({
             <input
               name="dia"
               placeholder="Ej: Lunes 12/05"
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
             />
           </Field>
 
           <label className="col-span-2 flex items-center gap-2 text-sm">
-            <input type="checkbox" name="seguidora" className="accent-berry" />
+            <input type="checkbox" name="seguidora" className="accent-eva" />
             <span>Es seguidora</span>
           </label>
 
@@ -176,7 +176,7 @@ export default function NewLeadModal({
             <textarea
               name="observacion"
               rows={3}
-              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-berry focus:outline-none"
+              className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
             />
           </Field>
 
@@ -197,7 +197,7 @@ export default function NewLeadModal({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded bg-berry px-4 py-2 text-sm font-semibold text-white hover:bg-berry/90 disabled:opacity-60"
+              className="rounded bg-eva px-4 py-2 text-sm font-semibold text-white hover:bg-eva-dark disabled:opacity-60"
             >
               {submitting ? "Guardando…" : "Guardar lead"}
             </button>
