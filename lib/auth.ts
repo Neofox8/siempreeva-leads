@@ -1,5 +1,5 @@
 import { supabaseAdmin, supabaseRSC } from "@/lib/supabase/server";
-import type { Rol, SesionUsuario } from "@/types/lead";
+import type { RolUsuario, SesionUsuario } from "@/types/lead";
 
 export async function getSesion(): Promise<SesionUsuario | null> {
   const ssr = supabaseRSC();
@@ -17,7 +17,7 @@ export async function getSesion(): Promise<SesionUsuario | null> {
 
   if (!perfil || perfil.activo === false) return null;
 
-  const rol: Rol = perfil.rol === "admin" ? "admin" : "staff";
+  const rol = perfil.rol as RolUsuario;
 
   return {
     id: user.id,
