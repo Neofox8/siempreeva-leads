@@ -43,11 +43,11 @@ export type LeadFilters = {
   q?: string;
 };
 
-export type Rol = "admin" | "staff";
+export type RolUsuario = "admin" | "directora" | "fundadora" | "especialista";
 
 export type SesionUsuario = {
   id: string;
   email: string | null;
   nombre: string | null;
-  rol: Rol;
+  rol: RolUsuario;
 };
