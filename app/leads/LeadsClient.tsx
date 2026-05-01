@@ -273,6 +273,7 @@ export default function LeadsClient({
               <Th width="w-[60px]">Seg.</Th>
               <Th width="w-[130px]">Atendido</Th>
               <Th width="min-w-[140px]">Observación</Th>
+              <Th width="w-[120px]">{""}</Th>
               {isAdmin && <Th width="w-[70px]">{""}</Th>}
             </tr>
           </thead>
@@ -280,7 +281,7 @@ export default function LeadsClient({
             {leads.length === 0 ? (
               <tr>
                 <td
-                  colSpan={isAdmin ? 13 : 12}
+                  colSpan={isAdmin ? 14 : 13}
                   className="px-2 py-10 text-center text-neutral-500"
                 >
                   No hay leads para los filtros aplicados.
@@ -478,6 +479,18 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           )}
         </div>
       </Td>
+      <td className="px-2 py-1 align-middle">
+        {(atendido === "asistio" || atendido === "paciente") && (
+          <a
+            href="https://caja-siempre-eva.netlify.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block whitespace-nowrap rounded bg-eva px-2 py-1 text-[11px] font-semibold text-white hover:bg-eva-dark"
+          >
+            Registrar en Caja
+          </a>
+        )}
+      </td>
       {isAdmin && (
         <td className="px-2 py-1 align-middle">
           <div className="relative inline-block">
