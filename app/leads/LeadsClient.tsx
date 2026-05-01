@@ -482,7 +482,9 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
       <td className="px-2 py-1 align-middle">
         {(atendido === "asistio" || atendido === "paciente") && (
           <a
-            href="https://caja-siempre-eva.netlify.app"
+            href={`https://caja-siempre-eva.netlify.app/captura${
+              lead.nombre ? `?cliente=${encodeURIComponent(lead.nombre)}` : ""
+            }`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block whitespace-nowrap rounded bg-eva px-2 py-1 text-[11px] font-semibold text-white hover:bg-eva-dark"
