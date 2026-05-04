@@ -40,20 +40,25 @@ export default function NewLeadModal({
 
   async function checkDuplicate(field: DuplicateField, raw: string) {
     const value = raw.trim();
+    console.log("[dup-check] blur", { field, value });
     if (!value) return;
-    if (dismissedRef.current[field].has(value)) return;
+    if (dismissedRef.current[field].has(value)) {
+      console.log("[dup-check] dismissed previously, skipping", { field, value });
+      return;
+    }
     try {
       const res = await fetch(
         `/api/leads/check-duplicate?field=${field}&value=${encodeURIComponent(value)}`,
         { method: "GET" }
       );
       const j = await res.json().catch(() => ({}));
+      console.log("[dup-check] response", { status: res.status, body: j });
       if (!res.ok || !j.ok) return;
       if (j.duplicate) {
         setDuplicate({ lead: j.duplicate as DuplicateLead, field });
       }
-    } catch {
-      // Falla silenciosa: el chequeo es informativo, no bloquea el flujo.
+    } catch (err) {
+      console.error("[dup-check] network error", err);
     }
   }
 

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { getSesion } from "@/lib/auth";
 import type { EstadoLead } from "@/types/lead";
 
 export const dynamic = "force-dynamic";
@@ -11,12 +10,10 @@ const ALLOWED_FIELDS = new Set(["celular", "usuario"]);
 // del duplicado porque ya está cerrado y se puede volver a registrar.
 const ESTADOS_TERMINALES: EstadoLead[] = ["descartado", "no_compro", "paciente"];
 
+// La autenticación se delega al middleware (matcher cubre /api/leads/:path*),
+// que devuelve 401 si no hay sesión. Como esta ruta es solo lectura (sin
+// efectos secundarios), no necesitamos un segundo chequeo aquí.
 export async function GET(req: NextRequest) {
-  const sesion = await getSesion();
-  if (!sesion) {
-    return NextResponse.json({ ok: false, error: "No autenticado" }, { status: 401 });
-  }
-
   const { searchParams } = new URL(req.url);
   const field = searchParams.get("field") ?? "";
   const value = (searchParams.get("value") ?? "").trim();
