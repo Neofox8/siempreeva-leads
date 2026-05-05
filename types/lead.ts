@@ -34,6 +34,7 @@ export type Lead = {
   fuente: OrigenLead | null;
   convertido: boolean | null;
   fecha_conversion: string | null;
+  fecha_agendado: string | null;
   creado_en: string;
 };
 

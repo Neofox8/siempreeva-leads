@@ -4,7 +4,12 @@ import { getSesion } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-const STAFF_FIELDS = new Set(["atendido", "observacion", "observacion2"]);
+const STAFF_FIELDS = new Set([
+  "atendido",
+  "observacion",
+  "observacion2",
+  "fecha_agendado",
+]);
 const ADMIN_FIELDS = new Set([
   ...STAFF_FIELDS,
   "nombre",

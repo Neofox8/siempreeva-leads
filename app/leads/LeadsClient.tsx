@@ -258,7 +258,7 @@ export default function LeadsClient({
       )}
 
       <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
-        <table className="w-full table-fixed divide-y divide-neutral-200 text-xs">
+        <table className="min-w-full table-fixed divide-y divide-neutral-200 text-xs">
           <thead className="bg-eva-bg text-left text-xs text-neutral-600">
             <tr>
               <Th width="w-[90px]">Fecha</Th>
@@ -272,7 +272,7 @@ export default function LeadsClient({
               <Th width="w-[120px]">Fuente</Th>
               <Th width="w-[60px]">Seg.</Th>
               <Th width="w-[130px]">Atendido</Th>
-              <Th width="min-w-[140px]">Observación</Th>
+              <Th width="w-[200px]">Observación</Th>
               <Th width="w-[120px]">{""}</Th>
               {isAdmin && <Th width="w-[70px]">{""}</Th>}
             </tr>
@@ -313,6 +313,12 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
   const router = useRouter();
   const [atendido, setAtendido] = useState<EstadoLead>(lead.atendido);
   const [observacion, setObservacion] = useState(lead.observacion ?? "");
+  const [fechaAgendado, setFechaAgendado] = useState(() =>
+    isoToLocalDate(lead.fecha_agendado)
+  );
+  const [horaAgendado, setHoraAgendado] = useState(() =>
+    isoToLocalTime(lead.fecha_agendado)
+  );
   const [saving, setSaving] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -331,6 +337,16 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
       }
     } finally {
       setSaving(null);
+    }
+  }
+
+  function saveFechaAgendado(fecha: string, hora: string) {
+    if (!fecha || !hora) return;
+    const local = new Date(`${fecha}T${hora}`);
+    if (Number.isNaN(local.getTime())) return;
+    const iso = local.toISOString();
+    if (iso !== lead.fecha_agendado) {
+      patch("fecha_agendado", iso);
     }
   }
 
@@ -440,24 +456,44 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
       </Td>
       <Td>{lead.seguidora == null ? "—" : lead.seguidora ? "Sí" : "No"}</Td>
       <Td title={ESTADO_LABELS[atendido]}>
-        <div className="flex items-center gap-1">
-          <select
-            value={atendido}
-            onChange={(e) => {
-              const v = e.target.value as EstadoLead;
-              setAtendido(v);
-              patch("atendido", v);
-            }}
-            className={`min-w-0 flex-1 rounded border px-2 py-1 text-xs ${atendidoColor}`}
-          >
-            {ESTADO_OPTIONS.map((v) => (
-              <option key={v} value={v}>
-                {ESTADO_LABELS[v]}
-              </option>
-            ))}
-          </select>
-          {saving === "atendido" && (
-            <span className="shrink-0 text-[10px] text-neutral-500">…</span>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1">
+            <select
+              value={atendido}
+              onChange={(e) => {
+                const v = e.target.value as EstadoLead;
+                setAtendido(v);
+                patch("atendido", v);
+              }}
+              className={`min-w-0 flex-1 rounded border px-2 py-1 text-xs ${atendidoColor}`}
+            >
+              {ESTADO_OPTIONS.map((v) => (
+                <option key={v} value={v}>
+                  {ESTADO_LABELS[v]}
+                </option>
+              ))}
+            </select>
+            {(saving === "atendido" || saving === "fecha_agendado") && (
+              <span className="shrink-0 text-[10px] text-neutral-500">…</span>
+            )}
+          </div>
+          {atendido === "agendado" && (
+            <div className="flex items-center gap-1">
+              <input
+                type="date"
+                value={fechaAgendado}
+                onChange={(e) => setFechaAgendado(e.target.value)}
+                onBlur={() => saveFechaAgendado(fechaAgendado, horaAgendado)}
+                className="min-w-0 flex-1 rounded border border-neutral-200 px-1 py-0.5 text-[11px] focus:border-eva focus:outline-none"
+              />
+              <input
+                type="time"
+                value={horaAgendado}
+                onChange={(e) => setHoraAgendado(e.target.value)}
+                onBlur={() => saveFechaAgendado(fechaAgendado, horaAgendado)}
+                className="min-w-0 w-[78px] rounded border border-neutral-200 px-1 py-0.5 text-[11px] focus:border-eva focus:outline-none"
+              />
+            </div>
           )}
         </div>
       </Td>
@@ -747,6 +783,25 @@ function formatDateFull(iso: string) {
   } catch {
     return iso;
   }
+}
+
+function isoToLocalDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function isoToLocalTime(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mi}`;
 }
 
 function formatAgo(ms: number): string {
