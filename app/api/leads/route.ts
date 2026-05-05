@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
     celular: clean(payload.celular),
     sede: clean(payload.sede),
     seguidora: toBool(payload.seguidora),
-    num_seguidores: toInt(payload.num_seguidores),
+    // ManyChat envía el campo como `numerodesequidores`; aceptamos ambos por compatibilidad.
+    num_seguidores: toInt(payload.num_seguidores ?? payload.numerodesequidores),
     turno: clean(payload.turno),
     dia: clean(payload.dia),
     fuente,
