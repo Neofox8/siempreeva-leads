@@ -10,6 +10,7 @@ export const revalidate = 0;
 type SearchParams = {
   sede?: string;
   atendido?: string;
+  flujo?: string;
   q?: string;
 };
 
@@ -30,6 +31,7 @@ export default async function LeadsPage({
 
   if (searchParams.sede) query = query.eq("sede", searchParams.sede);
   if (searchParams.atendido) query = query.eq("atendido", searchParams.atendido);
+  if (searchParams.flujo) query = query.eq("flujo", searchParams.flujo);
   if (searchParams.q) query = query.ilike("nombre", `%${searchParams.q}%`);
 
   const { data: leads, error } = await query;
@@ -66,6 +68,7 @@ export default async function LeadsPage({
       filters={{
         sede: searchParams.sede ?? "",
         atendido: searchParams.atendido ?? "",
+        flujo: searchParams.flujo ?? "",
         q: searchParams.q ?? "",
       }}
     />

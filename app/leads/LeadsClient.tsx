@@ -26,6 +26,7 @@ type Stats = {
 type Filters = {
   sede: string;
   atendido: string;
+  flujo: string;
   q: string;
 };
 
@@ -33,6 +34,11 @@ type Opt = { value: string; label: string };
 
 const SEDE_OPTIONS: string[] = ["San Miguel", "Miraflores"];
 const TURNO_OPTIONS: string[] = ["Mañana", "Tarde", "Noche"];
+const FLUJO_OPTIONS: string[] = [
+  "Diagnóstico Gratuito",
+  "Promo Exclusiva",
+  "Open House Mamá",
+];
 
 const FUENTE_OPTS: Opt[] = ORIGEN_OPTIONS.map((v) => ({
   value: v,
@@ -221,7 +227,22 @@ export default function LeadsClient({
           </select>
         </Field>
 
-        {(filters.sede || filters.atendido || filters.q) && (
+        <Field label="Flujo">
+          <select
+            value={filters.flujo}
+            onChange={(e) => updateParam("flujo", e.target.value)}
+            className="rounded border border-neutral-300 px-3 py-2 text-sm focus:border-eva focus:outline-none"
+          >
+            <option value="">Todas</option>
+            {FLUJO_OPTIONS.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {(filters.sede || filters.atendido || filters.flujo || filters.q) && (
           <button
             onClick={() => {
               startTransition(() => router.replace("/leads"));
@@ -270,6 +291,7 @@ export default function LeadsClient({
               <Th width="w-[90px]">Turno</Th>
               <Th width="w-[70px]">Día</Th>
               <Th width="w-[120px]">Fuente</Th>
+              <Th width="w-[140px]">Flujo</Th>
               <Th width="w-[60px]">Seg.</Th>
               <Th width="w-[130px]">Atendido</Th>
               <Th width="w-[200px]">Observación</Th>
@@ -281,7 +303,7 @@ export default function LeadsClient({
             {leads.length === 0 ? (
               <tr>
                 <td
-                  colSpan={isAdmin ? 14 : 13}
+                  colSpan={isAdmin ? 15 : 14}
                   className="px-2 py-10 text-center text-neutral-500"
                 >
                   No hay leads para los filtros aplicados.
@@ -454,6 +476,7 @@ function Row({ lead, isAdmin }: { lead: Lead; isAdmin: boolean }) {
           saving={saving === "fuente"}
         />
       </Td>
+      <Td title={lead.flujo ?? undefined}>{lead.flujo ?? "—"}</Td>
       <Td>{lead.seguidora == null ? "—" : lead.seguidora ? "Sí" : "No"}</Td>
       <Td title={ESTADO_LABELS[atendido]}>
         <div className="flex flex-col gap-1">

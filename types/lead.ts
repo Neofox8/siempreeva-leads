@@ -32,6 +32,7 @@ export type Lead = {
   observacion2: string | null;
   paciente_id: string | null;
   fuente: OrigenLead | null;
+  flujo: string | null;
   convertido: boolean | null;
   fecha_conversion: string | null;
   fecha_agendado: string | null;
@@ -41,6 +42,7 @@ export type Lead = {
 export type LeadFilters = {
   sede?: string;
   atendido?: EstadoLead | "";
+  flujo?: string;
   q?: string;
 };
 

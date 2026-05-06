@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     turno: clean(payload.turno),
     dia: clean(payload.dia),
     fuente,
+    flujo: clean(payload.flujo),
     observacion: clean(payload.observacion),
     // `atendido` se omite a propósito: el default de la columna en Postgres es 'no_atendido'.
   };
