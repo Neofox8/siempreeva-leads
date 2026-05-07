@@ -53,4 +53,5 @@ export type SesionUsuario = {
   email: string | null;
   nombre: string | null;
   rol: RolUsuario;
+  can_create_leads: boolean;
 };

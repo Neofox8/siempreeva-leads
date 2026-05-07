@@ -66,6 +66,7 @@ export default function LeadsClient({
   const pollIdRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isAdmin = sesion.rol === "admin";
+  const canCreateLead = isAdmin || sesion.can_create_leads === true;
 
   const doRefresh = useCallback(() => {
     try {
@@ -257,7 +258,7 @@ export default function LeadsClient({
           <span className="text-xs text-neutral-500">Actualizando…</span>
         )}
 
-        {isAdmin && (
+        {canCreateLead && (
           <button
             onClick={() => setModalOpen(true)}
             className="ml-auto rounded bg-eva px-4 py-2 text-sm font-semibold text-white hover:bg-eva-dark"

@@ -11,7 +11,7 @@ export async function getSesion(): Promise<SesionUsuario | null> {
   const admin = supabaseAdmin();
   const { data: perfil } = await admin
     .from("usuarios")
-    .select("nombre, email, rol, activo")
+    .select("nombre, email, rol, activo, can_create_leads")
     .eq("auth_id", user.id)
     .maybeSingle();
 
@@ -24,5 +24,6 @@ export async function getSesion(): Promise<SesionUsuario | null> {
     email: perfil.email ?? user.email ?? null,
     nombre: perfil.nombre ?? null,
     rol,
+    can_create_leads: perfil.can_create_leads === true,
   };
 }
